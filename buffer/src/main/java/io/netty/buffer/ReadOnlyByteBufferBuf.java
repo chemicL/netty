@@ -328,7 +328,7 @@ class ReadOnlyByteBufferBuf extends AbstractReferenceCountedByteBuf {
 
     @Override
     public boolean isReadOnly() {
-        return buffer.isReadOnly();
+        return true;
     }
 
     @Override
@@ -343,15 +343,11 @@ class ReadOnlyByteBufferBuf extends AbstractReferenceCountedByteBuf {
             return this;
         }
 
-        if (buffer.hasArray()) {
-            out.write(buffer.array(), index + buffer.arrayOffset(), length);
-        } else {
-            byte[] tmp = ByteBufUtil.threadLocalTempArray(length);
-            ByteBuffer tmpBuf = internalNioBuffer();
-            tmpBuf.clear().position(index);
-            tmpBuf.get(tmp, 0, length);
-            out.write(tmp, 0, length);
-        }
+        byte[] tmp = ByteBufUtil.threadLocalTempArray(length);
+        ByteBuffer tmpBuf = internalNioBuffer();
+        tmpBuf.clear().position(index);
+        tmpBuf.get(tmp, 0, length);
+        out.write(tmp, 0, length);
         return this;
     }
 
@@ -461,17 +457,17 @@ class ReadOnlyByteBufferBuf extends AbstractReferenceCountedByteBuf {
 
     @Override
     public boolean hasArray() {
-        return buffer.hasArray();
+        return false;
     }
 
     @Override
     public byte[] array() {
-        return buffer.array();
+        throw new ReadOnlyBufferException();
     }
 
     @Override
     public int arrayOffset() {
-        return buffer.arrayOffset();
+        throw new ReadOnlyBufferException();
     }
 
     @Override
