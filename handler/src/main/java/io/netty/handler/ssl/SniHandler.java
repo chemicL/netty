@@ -94,6 +94,7 @@ public class SniHandler extends AbstractSniHandler<SslContext> {
      */
     @Override
     protected Future<SslContext> lookup(ChannelHandlerContext ctx, String hostname) throws Exception {
+        System.err.println("looking up " + hostname);
         return mapping.map(hostname, ctx.executor().<SslContext>newPromise());
     }
 

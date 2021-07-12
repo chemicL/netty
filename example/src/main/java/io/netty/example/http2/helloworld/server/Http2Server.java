@@ -21,6 +21,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http2.Http2SecurityUtil;
 import io.netty.handler.logging.LogLevel;
@@ -31,11 +32,14 @@ import io.netty.handler.ssl.ApplicationProtocolConfig.SelectedListenerFailureBeh
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectorFailureBehavior;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.OpenSsl;
+import io.netty.handler.ssl.SniHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
+import io.netty.util.DomainNameMapping;
+import io.netty.util.DomainNameMappingBuilder;
 
 /**
  * An HTTP/2 Server that responds to requests with a Hello World. Once started, you can test the
@@ -43,7 +47,7 @@ import io.netty.handler.ssl.util.SelfSignedCertificate;
  */
 public final class Http2Server {
 
-    static final boolean SSL = System.getProperty("ssl") != null;
+    static final boolean SSL = true;// System.getProperty("ssl") != null;
 
     static final int PORT = Integer.parseInt(System.getProperty("port", SSL? "8443" : "8080"));
 
@@ -78,7 +82,16 @@ public final class Http2Server {
             b.group(group)
              .channel(NioServerSocketChannel.class)
              .handler(new LoggingHandler(LogLevel.INFO))
-             .childHandler(new Http2ServerInitializer(sslCtx));
+             .childHandler(new Http2ServerInitializer(sslCtx) {
+                 @Override
+                 public void initChannel(SocketChannel ch) {
+                     final DomainNameMapping<SslContext> mapping = new DomainNameMappingBuilder<SslContext>(sslCtx)
+                             .build();
+                     System.err.println("Initializing Sni");
+                     final SniHandler handler = new SniHandler(mapping);
+                     ch.pipeline().addLast(handler, new Http2OrHttpHandler());
+                 }
+             });
 
             Channel ch = b.bind(PORT).sync().channel();
 

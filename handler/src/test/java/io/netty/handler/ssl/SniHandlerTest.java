@@ -90,6 +90,7 @@ public class SniHandlerTest {
                 ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
                 // ACCEPT is currently the only mode supported by both OpenSsl and JDK providers.
                 ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
+                ApplicationProtocolNames.HTTP_2,
                 "myprotocol");
     }
 
@@ -423,7 +424,7 @@ public class SniHandlerTest {
                         // Server side SNI.
                         p.addLast(handler);
                         // Catch the notification event that APN has completed successfully.
-                        p.addLast(new ApplicationProtocolNegotiationHandler("foo") {
+                        p.addLast(new ApplicationProtocolNegotiationHandler(ApplicationProtocolNames.HTTP_2) {
                             @Override
                             protected void configurePipeline(ChannelHandlerContext ctx, String protocol) {
                                 // addresses issue #9131
@@ -443,7 +444,8 @@ public class SniHandlerTest {
                         ch.pipeline().addLast(new SslHandler(clientContext.newEngine(
                                 ch.alloc(), "sni.fake.site", -1)));
                         // Catch the notification event that APN has completed successfully.
-                        ch.pipeline().addLast(new ApplicationProtocolNegotiationHandler("foo") {
+                        ch.pipeline().addLast(new ApplicationProtocolNegotiationHandler(
+                                ApplicationProtocolNames.HTTP_2) {
                             @Override
                             protected void configurePipeline(ChannelHandlerContext ctx, String protocol) {
                                 // addresses issue #9131

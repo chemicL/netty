@@ -35,8 +35,11 @@ import io.netty.handler.codec.http2.Http2FrameCodecBuilder;
 import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2MultiplexHandler;
 import io.netty.handler.codec.http2.Http2ServerUpgradeCodec;
+import io.netty.handler.ssl.SniHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.util.AsciiString;
+import io.netty.util.DomainNameMapping;
+import io.netty.util.DomainNameMappingBuilder;
 import io.netty.util.ReferenceCountUtil;
 
 /**
@@ -83,7 +86,12 @@ public class Http2ServerInitializer extends ChannelInitializer<SocketChannel> {
      * Configure the pipeline for TLS NPN negotiation to HTTP/2.
      */
     private void configureSsl(SocketChannel ch) {
-        ch.pipeline().addLast(sslCtx.newHandler(ch.alloc()), new Http2OrHttpHandler());
+        final DomainNameMapping<SslContext> mapping = new DomainNameMappingBuilder<SslContext>(sslCtx)
+                .build();
+        System.err.println("Initializing Sni");
+        final SniHandler handler = new SniHandler(mapping);
+        ch.pipeline().addLast(handler, new Http2OrHttpHandler());
+//        ch.pipeline().addLast(sslCtx.newHandler(ch.alloc()), new Http2OrHttpHandler());
     }
 
     /**
